@@ -1,0 +1,17 @@
+{
+  "weights": {
+    "key_exchange": 0.35,
+    "tls13_adoption": 0.25,
+    "certificate_signature": 0.2,
+    "quantum_risk_window": 0.2
+  },
+  "thresholds": [
+    {"max": 3.99, "classification": "Critical PQC Exposure"},
+    {"max": 5.49, "classification": "Low Readiness"},
+    {"max": 6.49, "classification": "PQC Marginal"},
+    {"max": 8.49, "classification": "Transitioning"},
+    {"max": 10.0, "classification": "PQC Ready"}
+  ],
+  "nist_migration_year": 2035
+}
+

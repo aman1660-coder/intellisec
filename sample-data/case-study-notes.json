@@ -1,0 +1,10 @@
+{
+  "label": "Research Paper Case Study Dataset",
+  "mode": "RESEARCH CASE STUDY",
+  "notes": [
+    "This dataset is simulated from the IntelliSec paper and is not a live scan.",
+    "It demonstrates eight deterministic findings, two reported attack chains, compliance mapping, and PQC readiness.",
+    "The backend endpoint /api/case-study generates the full structured result at runtime."
+  ]
+}
+

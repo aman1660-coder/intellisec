@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(8, 17, 31, 0.94), rgba(8, 17, 31, 1)),
+    radial-gradient(circle at 20% 10%, rgba(32, 214, 199, 0.18), transparent 30%),
+    radial-gradient(circle at 90% 20%, rgba(245, 196, 81, 0.09), transparent 28%);
+  color: #e6edf7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.mesh {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.panel {
+  border: 1px solid rgba(151, 178, 205, 0.16);
+  background: rgba(13, 23, 38, 0.78);
+  box-shadow: 0 18px 70px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(18px);
+}
+
+.quiet-panel {
+  border: 1px solid rgba(151, 178, 205, 0.13);
+  background: rgba(16, 31, 51, 0.66);
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-md bg-cyanx px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-leaf focus:outline-none focus:ring-2 focus:ring-cyanx focus:ring-offset-2 focus:ring-offset-ink;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center gap-2 rounded-md border border-line bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-cyanx/60 hover:bg-cyanx/10;
+}
+
+.input {
+  @apply w-full rounded-md border border-line bg-ink/70 px-3 py-2.5 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyanx focus:ring-1 focus:ring-cyanx;
+}
+
+.select {
+  @apply w-full rounded-md border border-line bg-ink/70 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-cyanx focus:ring-1 focus:ring-cyanx;
+}
+
+.tab {
+  @apply rounded-md px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white;
+}
+
+.tab-active {
+  @apply bg-cyanx text-ink hover:bg-cyanx hover:text-ink;
+}
+
+.scrollbar::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+.scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.24);
+  border-radius: 999px;
+}
+
