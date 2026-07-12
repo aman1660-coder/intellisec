@@ -1531,3 +1531,138 @@ If you find IntelliSec interesting or useful for cybersecurity research, web sec
 ````
 
 One change you should make before uploading: replace `YOUR_GITHUB_REPOSITORY_URL` with your actual repository URL. Also, because the README uses external badge websites, GitHub will fetch those badge images from the web; the project screenshots themselves are correctly referenced from your `screenshots/` folder.
+## 📸 IntelliSec Platform Screenshots
+
+### 🏠 Landing Page
+
+The IntelliSec landing page introduces the research implementation platform and its five-stage security posture analysis workflow.
+
+![IntelliSec Landing Page](screenshots/01-landing-page.png)
+
+---
+
+### 🔐 User Registration
+
+Secure user registration enables users to create their IntelliSec workspace and manage authorized security assessments.
+
+![IntelliSec Registration](screenshots/02-registration-page.png)
+
+---
+
+### 📊 Security Dashboard
+
+The dashboard provides centralized access to security scans, findings, attack paths, compliance analysis, PQC readiness, research components, and historical results.
+
+![IntelliSec Dashboard](screenshots/03-dashboard.png)
+
+---
+
+### 🔍 New Authorized Security Scan
+
+Users can configure an authorized target and provide contextual information including website category, data sensitivity, exposure type, authentication mechanism, and business criticality.
+
+![New Security Scan](screenshots/04-new-scan.png)
+
+---
+
+### ⚙️ Real-Time Scan Progress
+
+IntelliSec displays the deterministic security analysis pipeline, including target validation, TLS analysis, certificate inspection, HTTP security header checks, attack graph generation, contextual risk calculation, compliance mapping, PQC assessment, and intelligence report generation.
+
+![IntelliSec Scan Progress](screenshots/05-scan-progress.png)
+
+---
+
+### 📈 Security Posture Overview
+
+The scan overview presents the IntelliSec posture score, detected findings, critical attack paths, compliance mappings, PQC readiness score, risk distribution, and five-factor contextual risk visualization.
+
+![Security Posture Overview](screenshots/06-scan-overview.png)
+
+---
+
+### 🛡️ Security Findings
+
+IntelliSec converts deterministic observations into structured security findings containing severity classifications, technical evidence, and remediation recommendations.
+
+![Security Findings](screenshots/07-security-findings.png)
+
+---
+
+### 🔗 Attack-Path Correlation
+
+The directed finding graph correlates individual vulnerabilities and security weaknesses to identify potential multi-stage attack chains.
+
+![Attack Path Analysis](screenshots/08-attack-paths.png)
+
+---
+
+### 🎯 Five-Factor Contextual Risk Analysis
+
+IntelliSec evaluates security posture using five contextual dimensions: exploitability, data sensitivity, cryptographic weakness depth, exposure surface, and chain amplification.
+
+![Contextual Risk Analysis](screenshots/09-contextual-risk.png)
+
+---
+
+### 🔒 TLS & Cryptographic Analysis
+
+The cryptographic analysis engine evaluates supported TLS versions, negotiated protocols, cipher suites, and cryptographic configurations.
+
+![TLS and Cryptography Analysis](screenshots/10-tls-cryptography.png)
+
+---
+
+### 📜 Certificate Intelligence
+
+IntelliSec performs certificate intelligence analysis including issuer information, validity period, signature algorithms, public-key configuration, hostname verification, and classical cryptographic dependencies.
+
+![Certificate Intelligence](screenshots/11-certificate-analysis.png)
+
+---
+
+### 🌐 HTTP Security Headers
+
+The platform evaluates important HTTP security controls including Content Security Policy, HSTS, X-Frame-Options, Permissions Policy, Referrer Policy, and Cross-Origin policies.
+
+![HTTP Security Headers](screenshots/12-http-headers.png)
+
+---
+
+### 📋 Compliance Mapping
+
+Technical security findings are mapped to relevant controls from NIST, GDPR, and PCI-DSS frameworks.
+
+![Compliance Mapping](screenshots/13-compliance-mapping.png)
+
+---
+
+### ⚛️ Post-Quantum Cryptography Readiness
+
+The PQC readiness engine evaluates key exchange mechanisms, TLS 1.3 adoption, certificate signature algorithms, and quantum migration risk.
+
+![PQC Readiness](screenshots/14-pqc-readiness.png)
+
+---
+
+### 🤖 Controlled AI Intelligence
+
+The AI intelligence layer receives structured deterministic findings rather than raw website content and generates executive summaries, developer guidance, compliance interpretations, and PQC migration recommendations.
+
+![AI Intelligence](screenshots/15-ai-intelligence.png)
+
+---
+
+### 🔬 Research Implementation
+
+The research dashboard explains IntelliSec's core research contributions, including deterministic detection, attack-path correlation, five-factor contextual risk scoring, compliance mapping, PQC readiness assessment, and controlled AI interpretation.
+
+![Research Implementation](screenshots/16-research-page.png)
+
+---
+
+### 🕒 Historical Security Posture Tracking
+
+IntelliSec stores previous scan results to support historical posture tracking and comparison of security scores, risk levels, and PQC readiness.
+
+![Scan History](screenshots/17-scan-history.png)
