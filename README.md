@@ -1545,7 +1545,7 @@ The IntelliSec landing page introduces the research implementation platform and 
 
 Secure user registration enables users to create their IntelliSec workspace and manage authorized security assessments.
 
-![IntelliSec Registration](screenshots/02-registration-page.png)
+![IntelliSec Registration](screenshots/02-user-registration.png)
 
 ---
 
@@ -1561,7 +1561,7 @@ The dashboard provides centralized access to security scans, findings, attack pa
 
 Users can configure an authorized target and provide contextual information including website category, data sensitivity, exposure type, authentication mechanism, and business criticality.
 
-![New Security Scan](screenshots/04-new-scan.png)
+![New Security Scan](screenshots/04-new-scan-configuration.png)
 
 ---
 
@@ -1577,7 +1577,7 @@ IntelliSec displays the deterministic security analysis pipeline, including targ
 
 The scan overview presents the IntelliSec posture score, detected findings, critical attack paths, compliance mappings, PQC readiness score, risk distribution, and five-factor contextual risk visualization.
 
-![Security Posture Overview](screenshots/06-scan-overview.png)
+![Security Posture Overview](screenshots/06-security-overview.png)
 
 ---
 
