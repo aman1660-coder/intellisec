@@ -1593,7 +1593,7 @@ IntelliSec converts deterministic observations into structured security findings
 
 The directed finding graph correlates individual vulnerabilities and security weaknesses to identify potential multi-stage attack chains.
 
-![Attack Path Analysis](screenshots/08-attack-paths-analysis.png)
+![Attack Path Analysis](screenshots/08-attack-path-analysis.png)
 
 ---
 
