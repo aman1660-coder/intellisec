@@ -1593,7 +1593,7 @@ IntelliSec converts deterministic observations into structured security findings
 
 The directed finding graph correlates individual vulnerabilities and security weaknesses to identify potential multi-stage attack chains.
 
-![Attack Path Analysis](screenshots/08-attack-paths.png)
+![Attack Path Analysis](screenshots/08-attack-paths-analysis.png)
 
 ---
 
@@ -1601,7 +1601,7 @@ The directed finding graph correlates individual vulnerabilities and security we
 
 IntelliSec evaluates security posture using five contextual dimensions: exploitability, data sensitivity, cryptographic weakness depth, exposure surface, and chain amplification.
 
-![Contextual Risk Analysis](screenshots/09-contextual-risk.png)
+![Contextual Risk Analysis](screenshots/09-contextual-risk-analysis.png)
 
 ---
 
@@ -1609,7 +1609,7 @@ IntelliSec evaluates security posture using five contextual dimensions: exploita
 
 The cryptographic analysis engine evaluates supported TLS versions, negotiated protocols, cipher suites, and cryptographic configurations.
 
-![TLS and Cryptography Analysis](screenshots/10-tls-cryptography.png)
+![TLS and Cryptography Analysis](screenshots/10-tls-cryptography-analysis.png)
 
 ---
 
@@ -1617,7 +1617,7 @@ The cryptographic analysis engine evaluates supported TLS versions, negotiated p
 
 IntelliSec performs certificate intelligence analysis including issuer information, validity period, signature algorithms, public-key configuration, hostname verification, and classical cryptographic dependencies.
 
-![Certificate Intelligence](screenshots/11-certificate-analysis.png)
+![Certificate Intelligence](screenshots/11-certificate-intelligence.png)
 
 ---
 
@@ -1625,7 +1625,7 @@ IntelliSec performs certificate intelligence analysis including issuer informati
 
 The platform evaluates important HTTP security controls including Content Security Policy, HSTS, X-Frame-Options, Permissions Policy, Referrer Policy, and Cross-Origin policies.
 
-![HTTP Security Headers](screenshots/12-http-headers.png)
+![HTTP Security Headers](screenshots/12-http-security-headers.png)
 
 ---
 
@@ -1657,7 +1657,7 @@ The AI intelligence layer receives structured deterministic findings rather than
 
 The research dashboard explains IntelliSec's core research contributions, including deterministic detection, attack-path correlation, five-factor contextual risk scoring, compliance mapping, PQC readiness assessment, and controlled AI interpretation.
 
-![Research Implementation](screenshots/16-research-page.png)
+![Research Implementation](screenshots/16-research-methodology.png)
 
 ---
 
