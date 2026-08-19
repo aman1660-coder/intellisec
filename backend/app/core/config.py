@@ -26,6 +26,11 @@ class Settings:
     max_response_bytes: int = int(os.getenv("MAX_RESPONSE_BYTES", "262144"))
     rate_limit: int = int(os.getenv("RATE_LIMIT", "20"))
     data_dir: Path = Path(os.getenv("DATA_DIR", str(BACKEND_DIR / ".data")))
+    strix_llm: str = os.getenv("STRIX_LLM", "")
+    strix_api_key: str = os.getenv("LLM_API_KEY", "")
+    strix_docker_image: str = os.getenv("STRIX_DOCKER_IMAGE", "ghcr.io/strix-labs/strix-sandbox:latest")
+    strix_max_turns: int = int(os.getenv("STRIX_MAX_TURNS", "100"))
+    strix_scan_timeout: int = int(os.getenv("STRIX_SCAN_TIMEOUT", "1800"))
 
     @property
     def allowed_origins(self) -> list[str]:

@@ -4,7 +4,7 @@ export const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/a
 
 export const api = axios.create({
   baseURL: API_BASE,
-  timeout: 30000
+  timeout: 60000
 });
 
 api.interceptors.request.use((config) => {
@@ -26,5 +26,12 @@ export const scansApi = {
   list: () => api.get("/scans").then((res) => res.data),
   get: (id) => api.get(`/scans/${id}`).then((res) => res.data),
   caseStudy: () => api.get("/case-study").then((res) => res.data)
+};
+
+export const securityApi = {
+  preflight: () => api.get("/scans/security/preflight").then(res => res.data),
+  create: (payload) => api.post("/scans/security", payload).then(res => res.data),
+  status: (id) => api.get(`/scans/${id}/status`).then(res => res.data),
+  report: (id) => api.get(`/scans/${id}/report`).then(res => res.data),
 };
 

@@ -37,6 +37,19 @@ class ScanRequest(BaseModel):
     authorization_confirmed: bool
     context: dict[str, Any] = Field(default_factory=dict)
 
+class SecurityScanRequest(BaseModel):
+    target_url: str
+    target_type: str = Field(default="web_application")  # web_application, repository, local_project
+    scan_name: str = Field(min_length=1, max_length=200)
+    scan_mode: str = Field(default="deep")  # quick, deep
+    description: str = Field(default="")
+    authorization_confirmed: bool = False
+
+import uuid
+from datetime import datetime, timezone
+from app.strix_engine.service import launch_scan, preflight_check
+from app.strix_engine.config import strix_config
+
 
 def public_user(user: dict[str, Any]) -> dict[str, Any]:
     return {"id": user["id"], "name": user["name"], "email": user["email"], "created_at": user.get("created_at")}
@@ -113,6 +126,102 @@ async def create_scan(payload: ScanRequest, request: Request, user: dict[str, An
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Scan failed: {exc.__class__.__name__}")
 
+
+@router.get("/scans/security/preflight")
+def security_preflight() -> dict[str, Any]:
+    return preflight_check()
+
+@router.post("/scans/security")
+async def create_security_scan(payload: SecurityScanRequest, user: dict[str, Any] = Depends(current_user)) -> dict[str, Any]:
+    if not payload.authorization_confirmed:
+        raise HTTPException(status_code=400, detail="Authorization confirmation is required.")
+    
+    # Validate target for web applications
+    if payload.target_type == "web_application":
+        try:
+            validate_target(payload.target_url)
+        except TargetValidationError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+    
+    # Check scan engine readiness (works with Docker OR AI Analysis mode)
+    preflight = preflight_check()
+    if not preflight["ready"]:
+        raise HTTPException(status_code=503, detail=f"Security scanning is not available: {'; '.join(preflight['errors'])}")
+    
+    scan_id = str(uuid.uuid4())
+    scan = {
+        "id": scan_id,
+        "user_id": user["id"],
+        "target": payload.target_url,
+        "normalized_target": payload.target_url,
+        "target_type": payload.target_type,
+        "scan_name": payload.scan_name,
+        "scan_mode": f"AI PENTEST ({payload.scan_mode})",
+        "scan_type": "security",
+        "description": payload.description,
+        "status": "queued",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "findings": [],
+        "security_score": None,
+        "total_findings": 0,
+        "critical_count": 0,
+        "high_count": 0,
+        "medium_count": 0,
+        "low_count": 0,
+        "info_count": 0,
+        "scan_phases": {
+            "target_validated": False,
+            "environment_setup": False,
+            "reconnaissance": False,
+            "security_testing": False,
+            "vulnerability_validation": False,
+            "report_generation": False,
+        },
+        "strix_reports": {},
+        "data_mode_notice": "AI SECURITY SCAN. Results from autonomous AI penetration testing against the authorized target.",
+    }
+    storage.add_scan(scan)
+    
+    # Launch background scan
+    launch_scan(
+        user_id=user["id"],
+        scan_id=scan_id,
+        target_url=payload.target_url,
+        target_type=payload.target_type,
+        scan_name=payload.scan_name,
+        scan_mode=payload.scan_mode,
+        description=payload.description,
+    )
+    
+    return {"id": scan_id, "status": "queued", "message": "Security scan started"}
+
+@router.get("/scans/{scan_id}/status")
+def get_scan_status(scan_id: str, user: dict[str, Any] = Depends(current_user)) -> dict[str, Any]:
+    scan = storage.get_scan(user["id"], scan_id)
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    return {
+        "id": scan["id"],
+        "status": scan.get("status", "unknown"),
+        "scan_phases": scan.get("scan_phases"),
+        "total_findings": scan.get("total_findings", 0),
+        "security_score": scan.get("security_score"),
+        "error": scan.get("error"),
+        "started_at": scan.get("started_at"),
+        "completed_at": scan.get("completed_at"),
+    }
+
+@router.get("/scans/{scan_id}/report")
+def get_scan_report(scan_id: str, user: dict[str, Any] = Depends(current_user)) -> dict[str, Any]:
+    scan = storage.get_scan(user["id"], scan_id)
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    return {
+        "reports": scan.get("strix_reports", scan.get("reports", {})),
+        "security_score": scan.get("security_score"),
+        "total_findings": scan.get("total_findings", 0),
+    }
 
 @router.get("/scans")
 def list_scans(user: dict[str, Any] = Depends(current_user)) -> list[dict[str, Any]]:

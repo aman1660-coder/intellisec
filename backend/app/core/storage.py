@@ -149,6 +149,25 @@ class JsonStorage:
 
         return None
 
+    def update_scan(self, user_id: str, scan_id: str, updates: dict[str, Any]) -> bool:
+        data = self._read()
+        for scan in data["scans"]:
+            if scan.get("id") == scan_id and scan.get("user_id") == user_id:
+                for key, value in updates.items():
+                    if "." in key:
+                        parts = key.split(".")
+                        current = scan
+                        for part in parts[:-1]:
+                            if part not in current or not isinstance(current[part], dict):
+                                current[part] = {}
+                            current = current[part]
+                        current[parts[-1]] = value
+                    else:
+                        scan[key] = value
+                self._write(data)
+                return True
+        return False
+
 
 class MongoStorage:
 
@@ -283,6 +302,13 @@ class MongoStorage:
                 "_id": 0
             }
         )
+
+    def update_scan(self, user_id: str, scan_id: str, updates: dict[str, Any]) -> bool:
+        result = self.db.scans.update_one(
+            {"id": scan_id, "user_id": user_id},
+            {"$set": updates}
+        )
+        return result.modified_count > 0
 
 
 def build_storage() -> JsonStorage | MongoStorage:

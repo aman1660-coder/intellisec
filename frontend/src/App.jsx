@@ -17,6 +17,8 @@ import ResearchNovelty from "./pages/ResearchNovelty";
 import CaseStudy from "./pages/CaseStudy";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import SecurityScanProgress from "./pages/SecurityScanProgress";
+import VulnerabilityDetail from "./pages/VulnerabilityDetail";
 
 function Protected({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -44,6 +46,8 @@ export default function App() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="new-scan" element={<NewScan />} />
         <Route path="scans/:scanId" element={<ScanResults />} />
+        <Route path="scans/:scanId/progress" element={<SecurityScanProgress />} />
+        <Route path="scans/:scanId/findings/:findingId" element={<VulnerabilityDetail />} />
         <Route path="findings" element={<FindingsExplorer />} />
         <Route path="attack-paths" element={<AttackPathExplorer />} />
         <Route path="compliance" element={<ComplianceDashboard />} />

@@ -1,4 +1,4 @@
-import { AlertTriangle, Binary, ClipboardCheck, GitBranch, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Binary, ClipboardCheck, GitBranch, ShieldCheck, Activity, Shield, Target } from "lucide-react";
 import { Link } from "react-router-dom";
 import EmptyState from "../components/EmptyState";
 import MetricCard from "../components/MetricCard";
@@ -12,10 +12,18 @@ export default function Dashboard() {
   if (loading) return <p className="text-slate-400">Loading dashboard...</p>;
   if (error) return <p className="rounded-md border border-danger/30 bg-danger/10 p-3 text-rose-100">{error}</p>;
   if (!scans.length) return <EmptyState />;
+
   const allFindings = scans.flatMap((scan) => scan.findings || []);
   const activePaths = scans.reduce((sum, scan) => sum + (scan.attack_paths?.length || 0), 0);
   const complianceCount = scans.reduce((sum, scan) => sum + (scan.compliance_mappings?.length || 0), 0);
   const pqcAverage = scans.reduce((sum, scan) => sum + (scan.pqc_readiness?.score || 0), 0) / scans.length;
+
+  const securityScans = scans.filter(s => s.scan_type === "security");
+  const latestSecurity = securityScans[0];
+  const activeSecurityScans = securityScans.filter(s => s.status === "queued" || s.status === "running").length;
+  const criticalCount = securityScans.reduce((sum, scan) => sum + (scan.critical_count || 0), 0);
+  const highCount = securityScans.reduce((sum, scan) => sum + (scan.high_count || 0), 0);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -25,6 +33,16 @@ export default function Dashboard() {
         </div>
         <Link to="/app/new-scan" className="btn-primary">Run authorized scan</Link>
       </div>
+
+      {securityScans.length > 0 && (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <MetricCard icon={Activity} label="Active Scans" value={activeSecurityScans} detail="currently running" tone="rose" />
+          <MetricCard icon={Shield} label="Security Score" value={latestSecurity?.security_score || "--"} detail="latest security scan" tone="cyan" />
+          <MetricCard icon={Target} label="Critical" value={criticalCount} detail="total critical findings" tone="red" />
+          <MetricCard icon={AlertTriangle} label="High" value={highCount} detail="total high findings" tone="amber" />
+        </div>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <MetricCard icon={ShieldCheck} label="IntelliSec Score" value={latest.intellisec_score || 0} detail="latest scan" />
         <MetricCard icon={AlertTriangle} label="Findings" value={allFindings.length} detail={`${allFindings.filter((f) => f.severity === "high").length} high`} tone="amber" />
@@ -53,7 +71,7 @@ export default function Dashboard() {
               </div>
               <div className="flex items-center gap-2">
                 <SeverityBadge severity={scan.risk_assessment?.severity} />
-                <span className="text-sm font-semibold text-cyanx">{scan.intellisec_score}/100</span>
+                <span className="text-sm font-semibold text-cyanx">{scan.scan_type === "security" ? scan.security_score : scan.intellisec_score}/100</span>
               </div>
             </Link>
           ))}
