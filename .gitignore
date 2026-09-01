@@ -9,3 +9,7 @@ dist/
 .DS_Store
 *.log
 strix_runs/
+
+# Local data
+.data/
+backend/.data/

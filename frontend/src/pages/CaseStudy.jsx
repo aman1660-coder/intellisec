@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import ScanReportView from "../components/ScanReportView";
 import { scansApi } from "../services/api";
+import { formatError } from "../utils/format";
 
 export default function CaseStudy() {
   const [scan, setScan] = useState(null);
@@ -11,7 +12,7 @@ export default function CaseStudy() {
     scansApi
       .caseStudy()
       .then((data) => active && setScan(data))
-      .catch((err) => active && setError(err.response?.data?.detail || "Unable to load case study."))
+      .catch((err) => active && setError(formatError(err, "Unable to load case study.")))
     return () => {
       active = false;
     };

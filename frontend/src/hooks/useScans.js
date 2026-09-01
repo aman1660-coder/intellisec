@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { scansApi } from "../services/api";
+import { formatError } from "../utils/format";
 
 export function useScans() {
   const [scans, setScans] = useState([]);
@@ -11,7 +12,7 @@ export function useScans() {
     scansApi
       .list()
       .then((data) => active && setScans(data))
-      .catch((err) => active && setError(err.response?.data?.detail || "Unable to load scans."))
+      .catch((err) => active && setError(formatError(err, "Unable to load scans.")))
       .finally(() => active && setLoading(false));
     return () => {
       active = false;

@@ -2,7 +2,7 @@ import { CheckCircle2, Loader2, ShieldAlert } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { scansApi, securityApi } from "../services/api";
-import { cx } from "../utils/format";
+import { cx, formatError } from "../utils/format";
 
 const stages = ["Initializing", "Validating Target", "Analyzing TLS", "Inspecting Certificate", "Checking Security Headers", "Building Attack Graph", "Calculating Contextual Risk", "Mapping Compliance Controls", "Assessing PQC Readiness", "Generating Intelligence Report"];
 
@@ -22,7 +22,7 @@ export default function NewScan() {
 
   // AI form
   const [aiForm, setAiForm] = useState({
-    name: "",
+    scan_name: "",
     target_url: params.get("target") || "",
     target_type: "web_application",
     scan_mode: "quick",
@@ -52,7 +52,7 @@ export default function NewScan() {
       setStage(stages.length - 1);
       navigate(`/app/scans/${scan.id}`);
     } catch (err) {
-      setError(err.response?.data?.detail || "Scan failed.");
+      setError(formatError(err, "Scan failed."));
       setRunning(false);
     }
   };
@@ -65,7 +65,7 @@ export default function NewScan() {
       const scan = await securityApi.create(aiForm);
       navigate(`/app/scans/${scan.id}/progress`);
     } catch (err) {
-      setError(err.response?.data?.detail || "Scan failed.");
+      setError(formatError(err, "Scan failed."));
       setAiRunning(false);
     }
   };
@@ -128,7 +128,7 @@ export default function NewScan() {
             <div className="mt-6 space-y-5">
               <label className="block">
                 <span className="text-sm font-medium text-slate-300">Scan Name</span>
-                <input className="input mt-2" placeholder="e.g. Prod API Scan" value={aiForm.name} onChange={(event) => setAiForm({ ...aiForm, name: event.target.value })} required />
+                <input className="input mt-2" placeholder="e.g. Prod API Scan" value={aiForm.scan_name} onChange={(event) => setAiForm({ ...aiForm, scan_name: event.target.value })} required />
               </label>
               <label className="block">
                 <span className="text-sm font-medium text-slate-300">Target URL</span>

@@ -20,12 +20,14 @@ def parse_vulnerabilities(run_dir: Path) -> list[dict]:
     return []
 
 def parse_executive_report(run_dir: Path) -> str | None:
-    report_file = run_dir / "report.md"
-    if report_file.exists():
-        try:
-            return report_file.read_text(encoding="utf-8")
-        except Exception:
-            return None
+    # Strix writes to "penetration_test_report.md", fallback to "report.md"
+    for name in ("penetration_test_report.md", "report.md"):
+        report_file = run_dir / name
+        if report_file.exists():
+            try:
+                return report_file.read_text(encoding="utf-8")
+            except Exception:
+                return None
     return None
 
 def normalize_finding(strix_vuln: dict, scan_id: str) -> dict:

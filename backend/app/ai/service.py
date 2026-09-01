@@ -46,7 +46,7 @@ async def interpret(payload: dict[str, Any]) -> dict[str, Any]:
     }
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.ai_model}:generateContent?key={settings.ai_api_key}"
     try:
-        async with httpx.AsyncClient(timeout=12) as client:
+        async with httpx.AsyncClient(timeout=30) as client:
             response = await client.post(url, json={"contents": [{"parts": [{"text": json.dumps(prompt)}]}]})
             response.raise_for_status()
             text = response.json()["candidates"][0]["content"]["parts"][0]["text"]

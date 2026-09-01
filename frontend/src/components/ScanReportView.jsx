@@ -1,12 +1,14 @@
 import { useMemo, useState } from "react";
-import { Download, FileJson, ShieldCheck } from "lucide-react";
+import { Download, FileJson, ShieldCheck, BrainCircuit } from "lucide-react";
+import { Link } from "react-router-dom";
 import MetricCard from "./MetricCard";
 import SeverityBadge from "./SeverityBadge";
 import AttackGraph from "./AttackGraph";
 import { ComplianceBars, RiskRadar, SeverityPie } from "../charts/RiskCharts";
 import { cx, dateShort, frameworkColor } from "../utils/format";
 
-const tabs = ["Overview", "Findings", "Attack Paths", "Contextual Risk", "TLS & Cryptography", "Certificate", "HTTP Headers", "Compliance", "PQC Readiness", "AI Intelligence", "Reports"];
+const deterministicTabs = ["Overview", "Findings", "Attack Paths", "Contextual Risk", "TLS & Cryptography", "Certificate", "HTTP Headers", "Compliance", "PQC Readiness", "AI Intelligence", "Reports"];
+const securityTabs = ["Overview", "Findings", "Executive Report", "Technical Report"];
 
 function exportJson(scan) {
   const blob = new Blob([JSON.stringify(scan, null, 2)], { type: "application/json" });
@@ -19,13 +21,19 @@ function exportJson(scan) {
 }
 
 export default function ScanReportView({ scan }) {
+  const isSecurityScan = scan.scan_type === "security";
+  const tabs = isSecurityScan ? securityTabs : deterministicTabs;
   const [active, setActive] = useState("Overview");
+
   const severityCounts = useMemo(() => {
     return (scan.findings || []).reduce((acc, item) => {
       acc[item.severity] = (acc[item.severity] || 0) + 1;
       return acc;
     }, {});
   }, [scan]);
+
+  const score = isSecurityScan ? scan.security_score : scan.intellisec_score;
+  const reports = isSecurityScan ? scan.strix_reports : scan.reports;
 
   return (
     <div className="space-y-6">
@@ -35,8 +43,12 @@ export default function ScanReportView({ scan }) {
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full border border-cyanx/40 bg-cyanx/10 px-3 py-1 text-xs font-semibold text-cyan-100">{scan.scan_mode}</span>
               <span className="rounded-full border border-line px-3 py-1 text-xs text-slate-400">{dateShort(scan.timestamp)}</span>
+              {isSecurityScan && (
+                <span className="rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs font-semibold text-amber-100">AI Security Scan</span>
+              )}
             </div>
             <h1 className="mt-3 text-3xl font-semibold text-white">{scan.normalized_target || scan.target}</h1>
+            {scan.scan_name && <p className="mt-1 text-lg text-slate-300">{scan.scan_name}</p>}
             <p className="mt-2 max-w-3xl text-sm text-slate-400">{scan.data_mode_notice}</p>
           </div>
           <div className="flex gap-3">
@@ -60,74 +72,223 @@ export default function ScanReportView({ scan }) {
         ))}
       </div>
 
+      {/* ============ OVERVIEW ============ */}
       {active === "Overview" && (
         <div className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            <MetricCard icon={ShieldCheck} label="IntelliSec Score" value={scan.intellisec_score ?? 0} detail="0-100 posture score" />
-            <MetricCard label="Findings" value={scan.findings?.length || 0} detail={`${severityCounts.critical || 0} critical, ${severityCounts.high || 0} high`} tone="amber" />
-            <MetricCard label="Critical Paths" value={scan.attack_paths?.filter((p) => p.severity === "critical").length || 0} detail={`${scan.attack_paths?.length || 0} active chains`} tone="rose" />
-            <MetricCard label="Compliance Mappings" value={scan.compliance_mappings?.length || 0} detail="technical indicators" tone="green" />
-            <MetricCard label="PQC Score" value={`${scan.pqc_readiness?.score ?? "NA"}/10`} detail={scan.pqc_readiness?.classification} tone="blue" />
-          </div>
-          <div className="grid gap-5 lg:grid-cols-2">
-            <div className="panel rounded-lg p-5">
-              <h2 className="text-lg font-semibold text-white">Risk Distribution</h2>
-              <SeverityPie findings={scan.findings || []} />
-            </div>
-            <div className="panel rounded-lg p-5">
-              <h2 className="text-lg font-semibold text-white">Five-Factor Risk</h2>
-              <RiskRadar risk={scan.risk_assessment} />
-            </div>
-          </div>
-          <div className="panel rounded-lg p-5">
-            <h2 className="text-lg font-semibold text-white">Top Remediation Actions</h2>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {(scan.findings || [])
-                .slice()
-                .sort((a, b) => b.base_score - a.base_score)
-                .slice(0, 6)
-                .map((finding) => (
-                  <div key={finding.finding_id} className="rounded-md border border-line bg-ink/60 p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <p className="font-medium text-white">{finding.title}</p>
-                      <SeverityBadge severity={finding.severity} />
+          {isSecurityScan ? (
+            /* Security Scan Overview */
+            <>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                <MetricCard icon={ShieldCheck} label="Security Score" value={score ?? 0} detail="0-100 security posture" />
+                <MetricCard label="Total Findings" value={scan.total_findings || 0} detail={`${scan.critical_count || 0} critical, ${scan.high_count || 0} high`} tone="amber" />
+                <MetricCard label="Critical" value={scan.critical_count || 0} detail="critical severity" tone="rose" />
+                <MetricCard label="High" value={scan.high_count || 0} detail="high severity" tone="amber" />
+                <MetricCard label="Medium" value={scan.medium_count || 0} detail="medium severity" tone="blue" />
+              </div>
+              <div className="grid gap-5 lg:grid-cols-2">
+                <div className="panel rounded-lg p-5">
+                  <h2 className="text-lg font-semibold text-white">Risk Distribution</h2>
+                  <SeverityPie findings={scan.findings || []} />
+                </div>
+                <div className="panel rounded-lg p-5">
+                  <h2 className="text-lg font-semibold text-white">Scan Information</h2>
+                  <div className="mt-4 space-y-3">
+                    <div className="flex justify-between border-b border-line pb-2">
+                      <span className="text-slate-400">Engine</span>
+                      <span className="text-white font-medium">{scan.scan_engine === "strix" ? "Strix AI Engine" : "AI Analysis"}</span>
                     </div>
-                    <p className="mt-2 text-sm text-slate-400">{finding.remediation}</p>
+                    <div className="flex justify-between border-b border-line pb-2">
+                      <span className="text-slate-400">AI Provider</span>
+                      <span className="text-white font-medium">{scan.ai_provider || "gemini"}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-line pb-2">
+                      <span className="text-slate-400">Target Type</span>
+                      <span className="text-white font-medium">{scan.target_type || "web_application"}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-line pb-2">
+                      <span className="text-slate-400">Started</span>
+                      <span className="text-white font-medium">{dateShort(scan.started_at)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Completed</span>
+                      <span className="text-white font-medium">{dateShort(scan.completed_at)}</span>
+                    </div>
                   </div>
-                ))}
-            </div>
-          </div>
+                </div>
+              </div>
+              <div className="panel rounded-lg p-5">
+                <h2 className="text-lg font-semibold text-white">Top Remediation Actions</h2>
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  {(scan.findings || [])
+                    .slice()
+                    .sort((a, b) => (b.base_score || 0) - (a.base_score || 0))
+                    .slice(0, 6)
+                    .map((finding, idx) => (
+                      <Link key={finding.finding_id || idx} to={`/app/scans/${scan.id}/findings/${finding.finding_id || finding.id}`} className="block">
+                        <div className="rounded-md border border-line bg-ink/60 p-3 hover:border-cyanx/50 transition-colors">
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="font-medium text-white">{finding.title}</p>
+                            <SeverityBadge severity={finding.severity} />
+                          </div>
+                          <p className="mt-2 text-sm text-slate-400">{finding.remediation}</p>
+                        </div>
+                      </Link>
+                    ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            /* Deterministic Scan Overview */
+            <>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                <MetricCard icon={ShieldCheck} label="IntelliSec Score" value={score ?? 0} detail="0-100 posture score" />
+                <MetricCard label="Findings" value={scan.findings?.length || 0} detail={`${severityCounts.critical || 0} critical, ${severityCounts.high || 0} high`} tone="amber" />
+                <MetricCard label="Critical Paths" value={scan.attack_paths?.filter((p) => p.severity === "critical").length || 0} detail={`${scan.attack_paths?.length || 0} active chains`} tone="rose" />
+                <MetricCard label="Compliance Mappings" value={scan.compliance_mappings?.length || 0} detail="technical indicators" tone="green" />
+                <MetricCard label="PQC Score" value={`${scan.pqc_readiness?.score ?? "NA"}/10`} detail={scan.pqc_readiness?.classification} tone="blue" />
+              </div>
+              <div className="grid gap-5 lg:grid-cols-2">
+                <div className="panel rounded-lg p-5">
+                  <h2 className="text-lg font-semibold text-white">Risk Distribution</h2>
+                  <SeverityPie findings={scan.findings || []} />
+                </div>
+                <div className="panel rounded-lg p-5">
+                  <h2 className="text-lg font-semibold text-white">Five-Factor Risk</h2>
+                  <RiskRadar risk={scan.risk_assessment} />
+                </div>
+              </div>
+              <div className="panel rounded-lg p-5">
+                <h2 className="text-lg font-semibold text-white">Top Remediation Actions</h2>
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  {(scan.findings || [])
+                    .slice()
+                    .sort((a, b) => b.base_score - a.base_score)
+                    .slice(0, 6)
+                    .map((finding) => (
+                      <div key={finding.finding_id} className="rounded-md border border-line bg-ink/60 p-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="font-medium text-white">{finding.title}</p>
+                          <SeverityBadge severity={finding.severity} />
+                        </div>
+                        <p className="mt-2 text-sm text-slate-400">{finding.remediation}</p>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 
+      {/* ============ FINDINGS ============ */}
       {active === "Findings" && (
         <div className="grid gap-3">
-          {(scan.findings || []).map((finding) => (
-            <div key={finding.finding_id} className="panel rounded-lg p-4">
-              <div className="flex flex-col justify-between gap-3 md:flex-row md:items-start">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-500">{finding.category}</p>
-                  <h2 className="mt-1 text-lg font-semibold text-white">{finding.title}</h2>
-                  <p className="mt-2 text-sm text-slate-400">{finding.description}</p>
+          {(scan.findings || []).length === 0 ? (
+            <div className="panel rounded-lg p-8 text-center text-slate-400">No findings detected for this scan.</div>
+          ) : (
+            (scan.findings || []).map((finding, idx) => (
+              <div key={finding.finding_id || idx} className="panel rounded-lg p-4">
+                <div className="flex flex-col justify-between gap-3 md:flex-row md:items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-xs uppercase tracking-wide text-slate-500">{finding.category || finding.finding_type || "Vulnerability"}</p>
+                      {isSecurityScan && (
+                        <span className="text-[10px] uppercase font-bold text-gold bg-gold/10 px-1.5 py-0.5 rounded">AI Scan</span>
+                      )}
+                    </div>
+                    <h2 className="mt-1 text-lg font-semibold text-white">{finding.title}</h2>
+                    <p className="mt-2 text-sm text-slate-400">{finding.description}</p>
+                  </div>
+                  <SeverityBadge severity={finding.severity} />
                 </div>
-                <SeverityBadge severity={finding.severity} />
-              </div>
-              <div className="mt-4 grid gap-3 lg:grid-cols-2">
-                <pre className="overflow-auto rounded-md border border-line bg-ink/80 p-3 text-xs text-slate-300">{JSON.stringify(finding.evidence, null, 2)}</pre>
-                <div className="rounded-md border border-line bg-panel2 p-3 text-sm text-slate-300">
-                  <p className="font-semibold text-white">Remediation</p>
-                  <p className="mt-2">{finding.remediation}</p>
-                  <p className="mt-3 text-xs text-slate-500">{finding.deterministic_status} - {finding.affected_component}</p>
+                <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                  <pre className="overflow-auto rounded-md border border-line bg-ink/80 p-3 text-xs text-slate-300">
+                    {JSON.stringify(finding.evidence, null, 2)}
+                  </pre>
+                  <div className="rounded-md border border-line bg-panel2 p-3 text-sm text-slate-300">
+                    <p className="font-semibold text-white">Remediation</p>
+                    <p className="mt-2">{finding.remediation}</p>
+                    <p className="mt-3 text-xs text-slate-500">{finding.deterministic_status} - {finding.affected_component}</p>
+                    {finding.cvss != null && (
+                      <p className="mt-2 text-xs text-slate-500">CVSS: {finding.cvss} {finding.cwe && `| ${finding.cwe}`}</p>
+                    )}
+                  </div>
                 </div>
+                {isSecurityScan && (
+                  <div className="mt-3 text-right">
+                    <Link to={`/app/scans/${scan.id}/findings/${finding.finding_id || finding.id}`} className="text-sm text-cyanx hover:underline">
+                      View Full Details →
+                    </Link>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       )}
 
-      {active === "Attack Paths" && <AttackGraph graph={scan.attack_graph} paths={scan.attack_paths || []} />}
+      {/* ============ SECURITY SCAN: EXECUTIVE REPORT ============ */}
+      {active === "Executive Report" && isSecurityScan && (
+        <div className="panel rounded-lg p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <BrainCircuit className="text-cyanx" size={28} />
+            <h2 className="text-2xl font-semibold text-white">{reports?.executive?.title || "Executive Report"}</h2>
+          </div>
+          <div className="rounded-lg border border-line bg-ink/50 p-6">
+            <p className="text-slate-300 leading-relaxed whitespace-pre-wrap text-base">
+              {reports?.executive?.content || "No executive report available."}
+            </p>
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <div className="quiet-panel rounded-lg p-4">
+              <p className="text-xs uppercase text-slate-500">Security Score</p>
+              <p className="mt-2 text-3xl font-semibold text-cyanx">{score ?? "--"}/100</p>
+            </div>
+            <div className="quiet-panel rounded-lg p-4">
+              <p className="text-xs uppercase text-slate-500">Total Findings</p>
+              <p className="mt-2 text-3xl font-semibold text-amber-200">{scan.total_findings || 0}</p>
+            </div>
+            <div className="quiet-panel rounded-lg p-4">
+              <p className="text-xs uppercase text-slate-500">Critical + High</p>
+              <p className="mt-2 text-3xl font-semibold text-rose-300">{(scan.critical_count || 0) + (scan.high_count || 0)}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {active === "Contextual Risk" && (
+      {/* ============ SECURITY SCAN: TECHNICAL REPORT ============ */}
+      {active === "Technical Report" && isSecurityScan && (
+        <div className="space-y-5">
+          <div className="panel rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-white">{reports?.technical?.title || "Technical Analysis"}</h2>
+            {reports?.technical?.methodology && (
+              <div className="mt-4">
+                <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Methodology</h3>
+                <p className="mt-2 text-slate-300 whitespace-pre-wrap">{reports.technical.methodology}</p>
+              </div>
+            )}
+            {reports?.technical?.technical_analysis && (
+              <div className="mt-4">
+                <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Analysis</h3>
+                <div className="mt-2 rounded-md border border-line bg-ink/50 p-4">
+                  <p className="text-slate-300 whitespace-pre-wrap">{reports.technical.technical_analysis}</p>
+                </div>
+              </div>
+            )}
+            {reports?.technical?.recommendations && (
+              <div className="mt-4">
+                <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Recommendations</h3>
+                <p className="mt-2 text-slate-300 whitespace-pre-wrap">{reports.technical.recommendations}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ============ DETERMINISTIC TABS (unchanged) ============ */}
+      {active === "Attack Paths" && !isSecurityScan && <AttackGraph graph={scan.attack_graph} paths={scan.attack_paths || []} />}
+
+      {active === "Contextual Risk" && !isSecurityScan && (
         <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="panel rounded-lg p-5">
             <h2 className="text-lg font-semibold text-white">Contextual Score</h2>
@@ -150,7 +311,7 @@ export default function ScanReportView({ scan }) {
         </div>
       )}
 
-      {active === "TLS & Cryptography" && (
+      {active === "TLS & Cryptography" && !isSecurityScan && (
         <div className="grid gap-4 md:grid-cols-2">
           {Object.entries(scan.tls?.protocols || {}).map(([name, item]) => (
             <div key={name} className="panel rounded-lg p-4">
@@ -166,14 +327,14 @@ export default function ScanReportView({ scan }) {
         </div>
       )}
 
-      {active === "Certificate" && (
+      {active === "Certificate" && !isSecurityScan && (
         <div className="panel rounded-lg p-5">
           <h2 className="text-lg font-semibold text-white">Certificate Intelligence</h2>
           <pre className="mt-4 overflow-auto rounded-md border border-line bg-ink/80 p-4 text-sm text-slate-300">{JSON.stringify(scan.tls?.certificate || "Not assessed", null, 2)}</pre>
         </div>
       )}
 
-      {active === "HTTP Headers" && (
+      {active === "HTTP Headers" && !isSecurityScan && (
         <div className="grid gap-3 md:grid-cols-2">
           {(scan.http?.headers || []).map((header) => (
             <div key={header.header} className="quiet-panel rounded-lg p-4">
@@ -191,7 +352,7 @@ export default function ScanReportView({ scan }) {
         </div>
       )}
 
-      {active === "Compliance" && (
+      {active === "Compliance" && !isSecurityScan && (
         <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="panel rounded-lg p-5">
             <h2 className="text-lg font-semibold text-white">Framework Coverage</h2>
@@ -213,7 +374,7 @@ export default function ScanReportView({ scan }) {
         </div>
       )}
 
-      {active === "PQC Readiness" && (
+      {active === "PQC Readiness" && !isSecurityScan && (
         <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
           <div className="panel rounded-lg p-5">
             <p className="text-sm uppercase tracking-wide text-slate-500">PQC readiness</p>
@@ -241,7 +402,7 @@ export default function ScanReportView({ scan }) {
         </div>
       )}
 
-      {active === "AI Intelligence" && (
+      {active === "AI Intelligence" && !isSecurityScan && (
         <div className="panel rounded-lg p-5">
           <h2 className="text-lg font-semibold text-white">Controlled AI Interpretation</h2>
           <p className="mt-2 text-sm text-slate-400">Provider: {scan.ai_interpretation?.provider}. AI receives structured findings only, never raw page content.</p>
@@ -249,7 +410,7 @@ export default function ScanReportView({ scan }) {
         </div>
       )}
 
-      {active === "Reports" && (
+      {active === "Reports" && !isSecurityScan && (
         <div className="grid gap-5 lg:grid-cols-3">
           {["developer", "compliance", "executive"].map((name) => (
             <div key={name} className="panel rounded-lg p-5">
@@ -263,4 +424,3 @@ export default function ScanReportView({ scan }) {
     </div>
   );
 }
-

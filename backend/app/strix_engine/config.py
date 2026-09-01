@@ -7,13 +7,17 @@ from app.core.config import BACKEND_DIR
 
 @dataclass(frozen=True)
 class StrixConfig:
-    llm_model: str = os.getenv("STRIX_LLM", "")
-    llm_api_key: str = os.getenv("LLM_API_KEY", "")
-    docker_image: str = os.getenv("STRIX_DOCKER_IMAGE", "ghcr.io/strix-labs/strix-sandbox:latest")
+    llm_model: str = os.getenv("STRIX_LLM", os.getenv("AI_MODEL", ""))
+    llm_api_key: str = os.getenv("LLM_API_KEY", os.getenv("AI_API_KEY", ""))
+    docker_image: str = os.getenv(
+        "STRIX_DOCKER_IMAGE",
+        os.getenv("STRIX_IMAGE", "ghcr.io/usestrix/strix-sandbox:1.3.0"),
+    )
     max_turns: int = int(os.getenv("STRIX_MAX_TURNS", "100"))
     runs_dir: Path = Path(os.getenv("STRIX_RUNS_DIR", str(BACKEND_DIR / "strix_runs")))
     scan_timeout: int = int(os.getenv("STRIX_SCAN_TIMEOUT", "1800"))
     strix_path: str = os.getenv("STRIX_PATH", "C:\\Users\\aman7\\Downloads\\strix-extracted\\strix-main")
+    strix_python: str = os.getenv("STRIX_PYTHON", "")
 
     @property
     def is_configured(self) -> bool:

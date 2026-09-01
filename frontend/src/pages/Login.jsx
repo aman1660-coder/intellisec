@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { formatError } from "../utils/format";
 
 export default function Login() {
   const { login } = useAuth();
@@ -17,7 +18,7 @@ export default function Login() {
       await login(form);
       navigate("/app/dashboard");
     } catch (err) {
-      setError(err.response?.data?.detail || "Login failed.");
+      setError(formatError(err, "Login failed."));
     } finally {
       setLoading(false);
     }

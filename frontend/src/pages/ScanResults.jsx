@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import ScanReportView from "../components/ScanReportView";
 import { scansApi } from "../services/api";
+import { formatError } from "../utils/format";
 
 export default function ScanResults() {
   const { scanId } = useParams();
@@ -12,7 +13,7 @@ export default function ScanResults() {
     scansApi
       .get(scanId)
       .then((data) => active && setScan(data))
-      .catch((err) => active && setError(err.response?.data?.detail || "Unable to load scan."))
+      .catch((err) => active && setError(formatError(err, "Unable to load scan.")))
     return () => {
       active = false;
     };

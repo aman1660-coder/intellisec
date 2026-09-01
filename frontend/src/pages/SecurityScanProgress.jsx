@@ -2,7 +2,7 @@ import { CheckCircle2, Circle, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { securityApi } from "../services/api";
-import { cx } from "../utils/format";
+import { cx, formatError } from "../utils/format";
 
 const ALL_PHASES = [
   { key: "target_validated", label: "Target validated" },
@@ -25,7 +25,7 @@ export default function SecurityScanProgress() {
         const data = await securityApi.status(scanId);
         if (active) setStatusData(data);
       } catch (err) {
-        if (active) setError(err.response?.data?.detail || "Failed to fetch status");
+        if (active) setError(formatError(err, "Failed to fetch status"));
       }
     };
 
@@ -52,7 +52,7 @@ export default function SecurityScanProgress() {
     return <div className="text-slate-400">Loading scan status...</div>;
   }
 
-  const { status, scan_phases = {}, vulnerabilities_found = 0 } = statusData;
+  const { status, scan_phases = {}, total_findings = 0 } = statusData;
 
   const completedCount = ALL_PHASES.filter((p) => scan_phases[p.key]).length;
   const progress = status === "completed" ? 100 : Math.round((completedCount / ALL_PHASES.length) * 100);
@@ -76,7 +76,7 @@ export default function SecurityScanProgress() {
 
         <div className="mt-6 flex items-center justify-between rounded-lg bg-ink/50 p-4 border border-line">
           <span className="text-slate-300">Live Vulnerabilities Discovered:</span>
-          <span className="text-xl font-bold text-danger">{vulnerabilities_found}</span>
+          <span className="text-xl font-bold text-danger">{total_findings}</span>
         </div>
 
         <div className="mt-6 space-y-3">
@@ -104,8 +104,20 @@ export default function SecurityScanProgress() {
         </div>
 
         {status === "completed" && (
-          <div className="mt-8 text-center">
-            <p className="mb-4 text-leaf font-medium">Scan completed successfully!</p>
+          <div className="mt-8 text-center space-y-4">
+            <p className="text-leaf font-medium text-lg">✓ Scan completed successfully!</p>
+            {statusData.security_score != null && (
+              <div className="flex justify-center gap-6">
+                <div className="quiet-panel rounded-lg px-6 py-3">
+                  <p className="text-xs text-slate-500">Security Score</p>
+                  <p className="text-2xl font-bold text-cyanx">{statusData.security_score}/100</p>
+                </div>
+                <div className="quiet-panel rounded-lg px-6 py-3">
+                  <p className="text-xs text-slate-500">Findings</p>
+                  <p className="text-2xl font-bold text-amber-200">{total_findings}</p>
+                </div>
+              </div>
+            )}
             <Link to={`/app/scans/${scanId}`} className="btn-primary inline-flex w-full justify-center md:w-auto">
               View Final Report
             </Link>
@@ -114,7 +126,9 @@ export default function SecurityScanProgress() {
 
         {status === "failed" && (
           <div className="mt-8 rounded-md border border-danger/30 bg-danger/10 p-4 text-center">
-            <p className="text-rose-100">Scan failed to complete. Please try again or check system logs.</p>
+            <p className="text-rose-100 font-medium">Scan failed to complete.</p>
+            {statusData.error && <p className="mt-2 text-sm text-rose-200">{statusData.error}</p>}
+            <p className="mt-2 text-sm text-slate-400">Please try again or check system logs.</p>
           </div>
         )}
       </div>

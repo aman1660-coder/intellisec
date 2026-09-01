@@ -110,7 +110,7 @@ async def run_ai_analysis(
     url = _GEMINI_URL.format(model=model, key=api_key)
 
     try:
-        async with httpx.AsyncClient(timeout=60) as client:
+        async with httpx.AsyncClient(timeout=90) as client:
             response = await client.post(
                 url,
                 json={

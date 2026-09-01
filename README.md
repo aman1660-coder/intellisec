@@ -647,57 +647,64 @@ IntelliSec/
 
 Follow the instructions below to run IntelliSec locally.
 
-## 1️⃣ Clone the Repository
+## Prerequisites
+
+| Requirement | Version | Purpose |
+|---|---|---|
+| **Node.js** | v18+ | Frontend development server |
+| **Python** | 3.11+ | Backend security engine |
+| **Git** | Any | Version control |
+| **Google Gemini API Key** | — | AI-powered security analysis ([Get one free](https://aistudio.google.com/apikey)) |
+| **MongoDB** *(optional)* | — | Persistent storage (falls back to JSON file storage if not configured) |
+
+---
+
+## 🚀 Quick Start (Windows)
+
+The fastest way to get IntelliSec running:
 
 ```bash
-git clone YOUR_GITHUB_REPOSITORY_URL
+git clone https://github.com/aman1660-coder/intellisec.git
+cd intellisec
 ```
 
-Navigate to the project directory:
+Then double-click **`start.bat`** — it will launch both servers and open your browser automatically.
+
+---
+
+## 📋 Step-by-Step Installation
+
+### 1️⃣ Clone the Repository
 
 ```bash
-cd IntelliSec
+git clone https://github.com/aman1660-coder/intellisec.git
+cd intellisec
 ```
 
 ---
 
-## 2️⃣ Install Frontend Dependencies
+### 2️⃣ Backend Setup
 
-Navigate to the frontend directory:
-
-```bash
-cd frontend
-```
-
-Install the required dependencies:
-
-```bash
-npm install
-```
-
----
-
-## 3️⃣ Install Backend Dependencies
-
-Navigate to the backend directory:
+Navigate to the backend directory and create a Python virtual environment:
 
 ```bash
 cd backend
+python -m venv .venv
 ```
 
-Create a Python virtual environment:
+Activate the virtual environment:
 
+**Windows:**
 ```bash
-python -m venv venv
+.\.venv\Scripts\activate
 ```
 
-Activate the virtual environment on Windows:
-
+**macOS/Linux:**
 ```bash
-venv\Scripts\activate
+source .venv/bin/activate
 ```
 
-Install the required Python dependencies:
+Install Python dependencies:
 
 ```bash
 pip install -r requirements.txt
@@ -705,67 +712,100 @@ pip install -r requirements.txt
 
 ---
 
-## 4️⃣ Configure Environment Variables
+### 3️⃣ Configure Environment Variables
 
-Create the required environment configuration files according to the project architecture.
-
-Example backend configuration:
+Create a `.env` file in the `backend/` directory:
 
 ```env
-MONGODB_URI=your_mongodb_connection_string
+# Database (leave empty for local JSON file storage)
+MONGODB_URI=
+MONGODB_DB=intellisec
 
-SECRET_KEY=your_secure_secret_key
+# Authentication
+JWT_SECRET=replace-with-a-long-random-secret
 
-AI_API_KEY=your_ai_api_key_if_required
+# AI Configuration (required for AI Security Scans)
+AI_PROVIDER=gemini
+AI_API_KEY=your_gemini_api_key_here
+AI_MODEL=gemini-2.5-flash
+
+# Frontend URL (for CORS)
+FRONTEND_URL=http://localhost:5173
+CORS_ORIGINS=http://localhost:5173
+
+# Environment
+ENVIRONMENT=development
+SCAN_TIMEOUT=15
 ```
 
-> ⚠️ Never commit `.env` files, database credentials, secret keys, API keys, authentication secrets, or other sensitive information to GitHub.
+> ⚠️ **Important:** Get your free Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey). Never commit `.env` files or API keys to GitHub.
 
 ---
 
-## 5️⃣ Start the Backend Server
+### 4️⃣ Frontend Setup
 
-Navigate to the backend directory:
-
-```bash
-cd backend
-```
-
-Run the FastAPI application:
-
-```bash
-uvicorn main:app --reload
-```
-
-The backend development server will typically run on:
-
-```text
-http://localhost:8000
-```
-
----
-
-## 6️⃣ Start the Frontend
-
-Open another terminal and navigate to the frontend directory:
+Open a new terminal and navigate to the frontend directory:
 
 ```bash
 cd frontend
+npm install
 ```
 
-Run the development server:
+---
+
+### 5️⃣ Start the Backend Server
+
+From the `backend/` directory (with virtual environment activated):
+
+```bash
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+The backend API will be available at:
+
+```
+http://localhost:8000
+http://localhost:8000/docs  (Interactive API documentation)
+```
+
+---
+
+### 6️⃣ Start the Frontend
+
+From the `frontend/` directory:
 
 ```bash
 npm run dev
 ```
 
-The frontend development server will typically run on:
+The frontend will be available at:
 
-```text
+```
 http://localhost:5173
 ```
 
 ---
+
+## 🔧 Dual Scan Modes
+
+IntelliSec provides two scanning modes:
+
+### Deterministic Scan
+- Runs TLS + HTTP security header analysis
+- Generates attack paths, compliance mappings, PQC readiness
+- AI-powered interpretation of findings
+- **No Docker required**
+
+### AI Security Scan (Strix Integration)
+- Autonomous AI penetration testing agent
+- Uses Gemini AI to analyze real scan data from the target
+- Produces executive + technical security reports
+- Identifies vulnerabilities with CVSS scores and remediation steps
+- **No Docker required** — uses AI Analysis mode
+
+---
+
+
 
 # 🔐 Security Analysis Architecture
 

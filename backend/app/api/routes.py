@@ -207,6 +207,7 @@ def get_scan_status(scan_id: str, user: dict[str, Any] = Depends(current_user)) 
         "scan_phases": scan.get("scan_phases"),
         "total_findings": scan.get("total_findings", 0),
         "security_score": scan.get("security_score"),
+        "scan_engine": scan.get("scan_engine"),
         "error": scan.get("error"),
         "started_at": scan.get("started_at"),
         "completed_at": scan.get("completed_at"),

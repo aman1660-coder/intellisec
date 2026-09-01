@@ -31,4 +31,33 @@ export function countsBy(items, key) {
     return acc;
   }, {});
 }
-
+export function formatError(err, fallback = "An error occurred") {
+  if (!err) return fallback;
+  
+  const detail = err.response?.data?.detail ?? err.detail ?? err;
+  
+  if (typeof detail === "string") {
+    return detail;
+  }
+  
+  if (Array.isArray(detail)) {
+    return detail
+      .map((item) => {
+        if (item && typeof item === "object") {
+          const field = item.loc ? item.loc[item.loc.length - 1] : "";
+          const msg = item.msg ?? "";
+          return field ? `${field}: ${msg}` : msg;
+        }
+        return String(item);
+      })
+      .filter(Boolean)
+      .join(", ");
+  }
+  
+  if (typeof detail === "object" && detail !== null) {
+    if (detail.message) return detail.message;
+    return JSON.stringify(detail);
+  }
+  
+  return String(detail);
+}

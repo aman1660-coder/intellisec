@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { formatError } from "../utils/format";
 
 export default function Register() {
   const { register } = useAuth();
@@ -19,7 +20,7 @@ export default function Register() {
       const target = params.get("target");
       navigate(target ? `/app/new-scan?target=${encodeURIComponent(target)}` : "/app/dashboard");
     } catch (err) {
-      setError(err.response?.data?.detail || "Registration failed.");
+      setError(formatError(err, "Registration failed."));
     } finally {
       setLoading(false);
     }

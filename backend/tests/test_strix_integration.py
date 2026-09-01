@@ -128,11 +128,10 @@ class TestStrixParser:
 class TestStrixConfig:
     def test_config_defaults(self):
         from app.strix_engine.config import StrixConfig
-        with patch.dict(os.environ, {}, clear=True):
-            config = StrixConfig()
-            assert config.max_turns == 100
-            assert config.scan_timeout == 1800
-            assert not config.is_configured
+        config = StrixConfig(llm_model="", llm_api_key="")
+        assert config.max_turns == 100
+        assert config.scan_timeout == 1800
+        assert not config.is_configured
     
     def test_config_is_configured(self):
         from app.strix_engine.config import StrixConfig
@@ -145,14 +144,22 @@ class TestStrixConfig:
 class TestPreflightCheck:
     def test_preflight_not_configured(self):
         from app.strix_engine.service import preflight_check
-        with patch.dict(os.environ, {"STRIX_LLM": "", "LLM_API_KEY": ""}, clear=False):
-            # Force reload config
-            from app.strix_engine import config as strix_cfg
-            original = strix_cfg.strix_config
-            strix_cfg.strix_config = strix_cfg.StrixConfig()
-            try:
-                result = preflight_check()
-                assert not result["ready"]
-                assert len(result["errors"]) > 0
-            finally:
-                strix_cfg.strix_config = original
+        import app.strix_engine.service as service_mod
+        from app.strix_engine.config import StrixConfig
+        
+        original_strix_cfg = service_mod.strix_config
+        service_mod.strix_config = StrixConfig(llm_model="", llm_api_key="")
+        
+        # Also temporarily clear settings.ai_api_key to avoid fallback ready
+        from app.core.config import settings
+        original_ai_key = settings.ai_api_key
+        # settings is a frozen dataclass, use object.__setattr__ to bypass
+        object.__setattr__(settings, 'ai_api_key', "")
+        
+        try:
+            result = preflight_check()
+            assert not result["ready"]
+            assert len(result["errors"]) > 0
+        finally:
+            object.__setattr__(settings, 'ai_api_key', original_ai_key)
+            service_mod.strix_config = original_strix_cfg
