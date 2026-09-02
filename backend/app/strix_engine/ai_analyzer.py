@@ -99,7 +99,7 @@ async def run_ai_analysis(
 
     # Phase 3: Send to Gemini for AI analysis
     api_key = settings.ai_api_key
-    model = settings.ai_model or "gemini-2.5-flash"
+    model = settings.ai_model or "gemini-3.6-flash"
 
     if not api_key:
         # No API key — return deterministic findings only

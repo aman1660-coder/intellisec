@@ -727,7 +727,7 @@ JWT_SECRET=replace-with-a-long-random-secret
 # AI Configuration (required for AI Security Scans)
 AI_PROVIDER=gemini
 AI_API_KEY=your_gemini_api_key_here
-AI_MODEL=gemini-2.5-flash
+AI_MODEL=gemini-3.6-flash
 
 # Frontend URL (for CORS)
 FRONTEND_URL=http://localhost:5173
