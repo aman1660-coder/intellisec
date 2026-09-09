@@ -9,7 +9,7 @@ echo  ==========================================
 echo.
 
 echo [1/2] Starting Backend on port 8000...
-start "IntelliSec-Backend" /min cmd /k "cd /d C:\Users\aman7\OneDrive\Desktop\intellisec\backend && .venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-exclude strix_runs --reload-exclude .data"
+start "IntelliSec-Backend" /min cmd /k "cd /d C:\Users\aman7\OneDrive\Desktop\intellisec\backend && .venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dirs app"
 
 echo [2/2] Starting Frontend on port 5173...
 start "IntelliSec-Frontend" /min cmd /k "cd /d C:\Users\aman7\OneDrive\Desktop\intellisec\frontend && npm run dev"
