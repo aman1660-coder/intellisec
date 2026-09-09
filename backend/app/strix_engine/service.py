@@ -152,9 +152,10 @@ async def start_security_scan(
             return  # Success
         except Exception as exc:
             logger.warning(
-                "Full Strix scan %s failed (%s), falling back to AI Analysis",
-                scan_id, exc,
+                "Full Strix scan %s failed (%s: %r), falling back to AI Analysis",
+                scan_id, type(exc).__name__, str(exc),
             )
+            logger.warning("Strix failure traceback:", exc_info=True)
             # Reset scan for fallback
             storage.update_scan(user_id, scan_id, {
                 "status": "running",
@@ -195,7 +196,11 @@ async def _run_full_strix_scan(
     scan_mode: str = "deep",
     description: str = "",
 ) -> None:
-    """Run full Strix autonomous pentesting via Docker sandbox."""
+    """Run full Strix autonomous pentesting via Docker sandbox.
+    
+    Uses subprocess.Popen in a thread executor instead of
+    asyncio.create_subprocess_exec for Windows compatibility.
+    """
     strix_run_dir = strix_config.runs_dir / scan_id
     strix_run_dir.mkdir(parents=True, exist_ok=True)
 
@@ -222,6 +227,7 @@ async def _run_full_strix_scan(
 
     # Create runner script
     runner_script = strix_run_dir / "_run_strix.py"
+    scan_config_json = json.dumps(scan_config)
     runner_script.write_text(f'''#!/usr/bin/env python3
 """Auto-generated Strix scan runner for {scan_id}."""
 import asyncio
@@ -242,7 +248,7 @@ async def main():
     try:
         from strix.core.runner import run_strix_scan
 
-        scan_config = json.loads({json.dumps(json.dumps(scan_config))})
+        scan_config = json.loads({json.dumps(scan_config_json)})
 
         result = await run_strix_scan(
             scan_config=scan_config,
@@ -251,11 +257,11 @@ async def main():
             max_turns={strix_config.max_turns},
             interactive=False,
         )
-        print("STRIX_SCAN_COMPLETED")
+        print("STRIX_SCAN_COMPLETED", flush=True)
     except Exception as e:
         import traceback
         traceback.print_exc()
-        print(f"STRIX_SCAN_ERROR: {{e}}", file=sys.stderr)
+        print(f"STRIX_SCAN_ERROR: {{e}}", file=sys.stderr, flush=True)
         sys.exit(1)
 
 if __name__ == "__main__":
@@ -266,7 +272,8 @@ if __name__ == "__main__":
         "scan_phases.reconnaissance": True,
     })
 
-    # Run Strix in its own Python venv
+    # Run Strix in its own Python venv using subprocess.Popen in a thread
+    # (asyncio.create_subprocess_exec has broken pipe handling on Windows)
     strix_python = _find_strix_python()
     env = os.environ.copy()
     env["STRIX_PATH"] = strix_config.strix_path
@@ -274,40 +281,63 @@ if __name__ == "__main__":
     env["LLM_API_KEY"] = strix_config.llm_api_key
     env["GEMINI_API_KEY"] = strix_config.llm_api_key
     env["STRIX_DOCKER_IMAGE"] = strix_config.docker_image
+    # Ensure Python output isn't buffered
+    env["PYTHONUNBUFFERED"] = "1"
 
-    logger.info("Starting Strix subprocess: %s %s", strix_python, runner_script)
-
-    process = await asyncio.create_subprocess_exec(
-        strix_python, str(runner_script),
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-        cwd=str(strix_run_dir),
-        env=env,
+    logger.info(
+        "Starting Strix subprocess: python=%s script=%s cwd=%s",
+        strix_python, runner_script, strix_run_dir,
     )
+
+    def _run_in_thread():
+        """Run the Strix scan in a blocking subprocess (called from thread)."""
+        proc = subprocess.Popen(
+            [strix_python, str(runner_script)],
+            stdout=open(strix_run_dir / "stdout.log", "w", encoding="utf-8"),
+            stderr=open(strix_run_dir / "stderr.log", "w", encoding="utf-8"),
+            cwd=str(strix_run_dir),
+            env=env,
+        )
+        try:
+            proc.wait(timeout=strix_config.scan_timeout)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait(timeout=10)
+            raise RuntimeError(f"Strix scan timed out after {strix_config.scan_timeout}s")
+        return proc.returncode
 
     storage.update_scan(user_id, scan_id, {
         "scan_phases.security_testing": True,
     })
 
+    loop = asyncio.get_event_loop()
     try:
-        stdout, stderr = await asyncio.wait_for(
-            process.communicate(),
-            timeout=strix_config.scan_timeout,
+        returncode = await loop.run_in_executor(None, _run_in_thread)
+    except Exception as exc:
+        logger.error(
+            "Strix subprocess failed for scan %s: %s: %s",
+            scan_id, type(exc).__name__, exc,
         )
-    except asyncio.TimeoutError:
-        process.kill()
-        raise RuntimeError(f"Strix scan timed out after {strix_config.scan_timeout}s")
+        # Read any logs that were written
+        stderr_log = strix_run_dir / "stderr.log"
+        stdout_log = strix_run_dir / "stdout.log"
+        if stderr_log.exists():
+            logger.error("Strix stderr: %s", stderr_log.read_text(encoding="utf-8")[:1000])
+        if stdout_log.exists():
+            logger.error("Strix stdout: %s", stdout_log.read_text(encoding="utf-8")[:1000])
+        raise
 
-    stdout_text = stdout.decode("utf-8", errors="replace")
-    stderr_text = stderr.decode("utf-8", errors="replace")
+    # Read logs
+    stdout_text = (strix_run_dir / "stdout.log").read_text(encoding="utf-8") if (strix_run_dir / "stdout.log").exists() else ""
+    stderr_text = (strix_run_dir / "stderr.log").read_text(encoding="utf-8") if (strix_run_dir / "stderr.log").exists() else ""
 
-    # Save logs
-    (strix_run_dir / "stdout.log").write_text(stdout_text, encoding="utf-8")
-    (strix_run_dir / "stderr.log").write_text(stderr_text, encoding="utf-8")
+    logger.info("Strix process exited with code %d for scan %s", returncode, scan_id)
+    if stderr_text.strip():
+        logger.info("Strix stderr: %s", stderr_text[:500])
 
-    if process.returncode != 0:
+    if returncode != 0:
         raise RuntimeError(
-            f"Strix process exited with code {process.returncode}: "
+            f"Strix process exited with code {returncode}: "
             f"{stderr_text[:500] or stdout_text[:500]}"
         )
 
