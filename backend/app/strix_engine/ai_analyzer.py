@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+import httpx
 import uuid
 from typing import Any
 
@@ -110,7 +111,7 @@ async def run_ai_analysis(
     url = _GEMINI_URL.format(model=model, key=api_key)
 
     try:
-        async with httpx.AsyncClient(timeout=90) as client:
+        async with httpx.AsyncClient(timeout=180) as client:
             response = await client.post(
                 url,
                 json={
@@ -142,6 +143,41 @@ async def run_ai_analysis(
                     "methodology": "AI analysis via Gemini",
                     "recommendations": "See executive summary",
                 }
+
+    except httpx.ReadTimeout:
+        # Retry once with longer timeout
+        logger.warning("Gemini API timed out at 180s, retrying with 300s timeout...")
+        try:
+            async with httpx.AsyncClient(timeout=300) as client:
+                response = await client.post(
+                    url,
+                    json={
+                        "contents": [{"parts": [{"text": prompt_text}]}],
+                        "generationConfig": {
+                            "temperature": 0.2,
+                            "topP": 0.8,
+                            "maxOutputTokens": 8192,
+                        },
+                    },
+                )
+                response.raise_for_status()
+                raw_text = response.json()["candidates"][0]["content"]["parts"][0]["text"]
+                cleaned = raw_text.strip()
+                if cleaned.startswith("```"):
+                    lines = cleaned.split("\n")
+                    cleaned = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
+                try:
+                    ai_result = json.loads(cleaned)
+                except json.JSONDecodeError:
+                    ai_result = {
+                        "vulnerabilities": [],
+                        "executive_summary": raw_text,
+                        "methodology": "AI analysis via Gemini",
+                        "recommendations": "See executive summary",
+                    }
+        except Exception as retry_exc:
+            logger.exception("Gemini AI retry also failed: %s", retry_exc)
+            return _deterministic_only_result(scan_payload, target_url)
 
     except Exception as exc:
         logger.exception("Gemini AI analysis failed: %s", exc)
