@@ -14,6 +14,14 @@ HIGH_CRYPTO_TYPES = {
     "untrusted_certificate",
 }
 
+HIGH_NETWORK_TYPES = {
+    "critical_port_exposed",
+    "database_port_exposed",
+    "cors_misconfiguration",
+    "cors_origin_reflection",
+    "no_https_redirect",
+}
+
 
 def _context_value(context: dict[str, Any], key: str, default: str) -> str:
     return str(context.get(key) or default).lower()
@@ -32,8 +40,10 @@ def score_contextual_risk(findings: list[dict[str, Any]], attack_paths: list[dic
         d2 = min(2.0, d2 + 0.25)
     has_high_crypto = any(f.get("finding_type") in HIGH_CRYPTO_TYPES for f in findings)
     has_crypto = any("TLS" in f.get("category", "") or "Certificate" in f.get("category", "") for f in findings)
+    has_high_network = any(f.get("finding_type") in HIGH_NETWORK_TYPES for f in findings)
     d3 = 2.0 if has_high_crypto else (1.0 if has_crypto else 0.4)
-    d4 = {"public": 2.0, "internet": 2.0, "external": 1.8, "partner": 1.1, "internal": 0.5}.get(exposure, 1.5)
+    d4_base = {"public": 2.0, "internet": 2.0, "external": 1.8, "partner": 1.1, "internal": 0.5}.get(exposure, 1.5)
+    d4 = min(2.0, d4_base + (0.3 if has_high_network else 0.0))
     max_alpha = max([float(path.get("amplification_factor", 1)) for path in attack_paths] or [1.0])
     d5 = min(2.0, max(0.0, (max_alpha - 1.0) * 5.0))
     dimensions = {

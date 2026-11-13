@@ -33,6 +33,7 @@ def make_finding(
     deterministic_status: str = "assessed",
     source: str = "live-scan",
     metadata: dict[str, Any] | None = None,
+    cwe: str | None = None,
 ) -> dict[str, Any]:
     return {
         "finding_id": f"F-{uuid.uuid4().hex[:10]}",
@@ -49,5 +50,6 @@ def make_finding(
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "source": source,
         "metadata": metadata or {},
+        "cwe": cwe,
     }
 

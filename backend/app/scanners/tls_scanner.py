@@ -163,6 +163,7 @@ def _build_tls_findings(protocols: dict[str, Any], cert: dict[str, Any] | None, 
                     "Disable TLS 1.0 and TLS 1.1. Require TLS 1.2 or TLS 1.3 with modern AEAD cipher suites.",
                     "TLS protocol configuration",
                     7.2,
+                    cwe="CWE-326",
                 )
             )
     cipher = (negotiated or {}).get("cipher") or {}
@@ -180,6 +181,7 @@ def _build_tls_findings(protocols: dict[str, Any], cert: dict[str, Any] | None, 
                 "Remove weak cipher suites and prefer TLS 1.3 or TLS 1.2 AEAD suites with ECDHE.",
                 "TLS cipher configuration",
                 7.4,
+                cwe="CWE-327",
             )
         )
     if cipher_name and not _cipher_is_forward_secret(cipher_name, protocol):
@@ -194,38 +196,39 @@ def _build_tls_findings(protocols: dict[str, Any], cert: dict[str, Any] | None, 
                 "Prefer ECDHE suites for TLS 1.2 and TLS 1.3-only configurations where possible.",
                 "TLS key exchange",
                 6.4,
+                cwe="CWE-326",
             )
         )
     if cert:
         if cert["expired"]:
             findings.append(
-                make_finding("expired_certificate", "Certificate is expired", "Certificate intelligence", "The X.509 certificate validity window has elapsed.", cert, "critical", "Renew and deploy a trusted certificate.", "TLS certificate", 9.0)
+                make_finding("expired_certificate", "Certificate is expired", "Certificate intelligence", "The X.509 certificate validity window has elapsed.", cert, "critical", "Renew and deploy a trusted certificate.", "TLS certificate", 9.0, cwe="CWE-298")
             )
         elif cert["days_until_expiry"] <= 30:
             findings.append(
-                make_finding("certificate_expiring_soon", "Certificate expires soon", "Certificate intelligence", "The certificate is within 30 days of expiration.", {"days_until_expiry": cert["days_until_expiry"]}, "medium", "Renew the certificate before expiry.", "TLS certificate", 5.0)
+                make_finding("certificate_expiring_soon", "Certificate expires soon", "Certificate intelligence", "The certificate is within 30 days of expiration.", {"days_until_expiry": cert["days_until_expiry"]}, "medium", "Renew the certificate before expiry.", "TLS certificate", 5.0, cwe="CWE-298")
             )
         if cert["hostname_match"] is False:
             findings.append(
-                make_finding("hostname_mismatch", "Certificate hostname mismatch", "Certificate intelligence", "The certificate identity does not match the target hostname.", {"hostname_error": cert["hostname_error"], "subject": cert["subject"]}, "high", "Deploy a certificate containing the target hostname in SAN/CN.", "TLS certificate", 8.0)
+                make_finding("hostname_mismatch", "Certificate hostname mismatch", "Certificate intelligence", "The certificate identity does not match the target hostname.", {"hostname_error": cert["hostname_error"], "subject": cert["subject"]}, "high", "Deploy a certificate containing the target hostname in SAN/CN.", "TLS certificate", 8.0, cwe="CWE-297")
             )
         if cert["trust_status"] != "trusted":
             findings.append(
-                make_finding("untrusted_certificate", "Certificate trust could not be verified", "Certificate intelligence", "The default trust store could not validate the certificate chain.", {"trust_error": cert["trust_error"], "issuer": cert["issuer"]}, "high", "Use a certificate chaining to a trusted public root CA.", "TLS certificate chain", 7.8)
+                make_finding("untrusted_certificate", "Certificate trust could not be verified", "Certificate intelligence", "The default trust store could not validate the certificate chain.", {"trust_error": cert["trust_error"], "issuer": cert["issuer"]}, "high", "Use a certificate chaining to a trusted public root CA.", "TLS certificate chain", 7.8, cwe="CWE-295")
             )
         if cert["self_signed"]:
             findings.append(
-                make_finding("self_signed_certificate", "Self-signed certificate detected", "Certificate intelligence", "The certificate issuer and subject are identical.", {"issuer": cert["issuer"], "subject": cert["subject"]}, "high", "Use a publicly trusted CA certificate for public web endpoints.", "TLS certificate", 7.5)
+                make_finding("self_signed_certificate", "Self-signed certificate detected", "Certificate intelligence", "The certificate issuer and subject are identical.", {"issuer": cert["issuer"], "subject": cert["subject"]}, "high", "Use a publicly trusted CA certificate for public web endpoints.", "TLS certificate", 7.5, cwe="CWE-295")
             )
         sig = (cert.get("signature_algorithm") or "").lower()
         if "sha1" in sig or sig == "md5":
             findings.append(
-                make_finding("sha1_certificate_signature", "Deprecated certificate signature algorithm", "Certificate intelligence", "The certificate uses a deprecated signature hash.", {"signature_algorithm": cert["signature_algorithm"]}, "high", "Reissue the certificate using SHA-256 or stronger.", "TLS certificate", 7.0)
+                make_finding("sha1_certificate_signature", "Deprecated certificate signature algorithm", "Certificate intelligence", "The certificate uses a deprecated signature hash.", {"signature_algorithm": cert["signature_algorithm"]}, "high", "Reissue the certificate using SHA-256 or stronger.", "TLS certificate", 7.0, cwe="CWE-328")
             )
         key = cert.get("public_key", {})
         if key.get("algorithm") == "RSA" and (key.get("size") or 0) < 2048:
             findings.append(
-                make_finding("rsa_key_below_2048", "RSA key below 2048 bits", "Certificate intelligence", "The certificate public key is below the recommended minimum size.", {"public_key": key}, "high", "Reissue with RSA-2048 or stronger, or ECDSA where appropriate.", "TLS certificate key", 7.0)
+                make_finding("rsa_key_below_2048", "RSA key below 2048 bits", "Certificate intelligence", "The certificate public key is below the recommended minimum size.", {"public_key": key}, "high", "Reissue with RSA-2048 or stronger, or ECDSA where appropriate.", "TLS certificate key", 7.0, cwe="CWE-326")
             )
         if cert.get("classical_crypto_dependency"):
             findings.append(
@@ -239,6 +242,7 @@ def _build_tls_findings(protocols: dict[str, Any], cert: dict[str, Any] | None, 
                     "Plan hybrid/PQC migration as ecosystem support matures; do not treat TLS 1.3 alone as PQC adoption.",
                     "TLS certificate and key exchange",
                     3.5,
+                    cwe="CWE-327",
                 )
             )
     return findings
@@ -266,4 +270,3 @@ def inspect_tls(target: ValidatedTarget) -> dict[str, Any]:
         "findings": findings,
         "not_assessed": [] if der else [{"check": "certificate", "reason": trust_error or "certificate unavailable"}],
     }
-

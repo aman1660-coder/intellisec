@@ -12,3 +12,4 @@ python-dotenv>=1.0.0
 # Strix AI security engine dependencies
 pydantic-settings>=2.13.0
 pyyaml>=6.0
+dnspython>=2.6.1

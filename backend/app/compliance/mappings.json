@@ -46,6 +46,91 @@
   ],
   "classical_crypto_dependency": [
     {"framework": "NIST", "control": "FIPS 203/204/205 and 2035 migration planning", "explanation": "Classical public-key cryptography is a migration dependency, not evidence of PQC adoption.", "remediation": "Track hybrid/PQC TLS and certificate ecosystem readiness.", "confidence": "medium"}
+  ],
+  "expired_certificate": [
+    {"framework": "GDPR", "control": "Article 32", "explanation": "An expired certificate breaks TLS trust, exposing personal data in transit.", "remediation": "Renew and deploy a valid certificate immediately.", "confidence": "high"},
+    {"framework": "NIST", "control": "SP 800-52 Rev. 2", "explanation": "Certificate validity is a prerequisite for secure TLS.", "remediation": "Implement automated certificate lifecycle management.", "confidence": "high"},
+    {"framework": "PCI-DSS", "control": "Requirement 4.2.1", "explanation": "Valid certificates are required for strong cryptography.", "remediation": "Deploy valid certificates.", "confidence": "high"}
+  ],
+  "certificate_expiring_soon": [
+    {"framework": "NIST", "control": "SP 800-52 Rev. 2", "explanation": "Proactive certificate management prevents service disruption.", "remediation": "Renew certificates before expiry.", "confidence": "medium"}
+  ],
+  "hostname_mismatch": [
+    {"framework": "GDPR", "control": "Article 32", "explanation": "Certificate hostname mismatch undermines transport authentication.", "remediation": "Deploy certificates matching the target hostname.", "confidence": "high"},
+    {"framework": "NIST", "control": "SP 800-52 Rev. 2", "explanation": "Server identity validation requires hostname match.", "remediation": "Include all hostnames in SAN.", "confidence": "high"},
+    {"framework": "PCI-DSS", "control": "Requirement 4.2.1", "explanation": "Valid server identity is part of strong cryptography requirements.", "remediation": "Deploy matching certificates.", "confidence": "high"}
+  ],
+  "untrusted_certificate": [
+    {"framework": "GDPR", "control": "Article 32", "explanation": "Untrusted certificates cannot guarantee data protection in transit.", "remediation": "Use certificates from trusted CAs.", "confidence": "high"},
+    {"framework": "NIST", "control": "SP 800-52 Rev. 2", "explanation": "Certificate chain validation is essential for TLS trust.", "remediation": "Deploy CA-signed certificates.", "confidence": "high"},
+    {"framework": "PCI-DSS", "control": "Requirement 4.2.1", "explanation": "Trusted certificates are required for secure transmission.", "remediation": "Use publicly trusted CA certificates.", "confidence": "high"}
+  ],
+  "self_signed_certificate": [
+    {"framework": "GDPR", "control": "Article 32", "explanation": "Self-signed certificates provide no third-party identity assurance.", "remediation": "Use CA-signed certificates for public endpoints.", "confidence": "high"},
+    {"framework": "NIST", "control": "SP 800-52 Rev. 2", "explanation": "Public-facing servers should use CA-issued certificates.", "remediation": "Deploy trusted CA certificates.", "confidence": "high"},
+    {"framework": "PCI-DSS", "control": "Requirement 4.2.1", "explanation": "Certificate trust chain is part of strong cryptography.", "remediation": "Replace with trusted certificates.", "confidence": "high"}
+  ],
+  "cors_misconfiguration": [
+    {"framework": "GDPR", "control": "Article 32", "explanation": "CORS misconfiguration can expose personal data to unauthorized origins.", "remediation": "Restrict CORS to trusted origins.", "confidence": "high"},
+    {"framework": "NIST", "control": "SP 800-53 AC-3", "explanation": "Access control should prevent unauthorized cross-origin access.", "remediation": "Configure restrictive CORS policies.", "confidence": "high"}
+  ],
+  "cors_origin_reflection": [
+    {"framework": "GDPR", "control": "Article 32", "explanation": "Origin reflection allows any website to access data cross-origin.", "remediation": "Whitelist specific trusted origins.", "confidence": "high"},
+    {"framework": "NIST", "control": "SP 800-53 AC-3", "explanation": "Reflecting arbitrary origins bypasses access control.", "remediation": "Validate origins against an allowlist.", "confidence": "high"}
+  ],
+  "cors_wildcard": [
+    {"framework": "NIST", "control": "SP 800-53 AC-3", "explanation": "Wildcard CORS weakens origin-based access control.", "remediation": "Restrict CORS to specific origins.", "confidence": "medium"}
+  ],
+  "no_https_redirect": [
+    {"framework": "GDPR", "control": "Article 32", "explanation": "Missing HTTPS redirect exposes data to cleartext interception.", "remediation": "Configure HTTP to HTTPS redirect.", "confidence": "high"},
+    {"framework": "NIST", "control": "SP 800-53 SC-8", "explanation": "Transport confidentiality requires enforced encryption.", "remediation": "Redirect all HTTP to HTTPS.", "confidence": "high"},
+    {"framework": "PCI-DSS", "control": "Requirement 4.2.1", "explanation": "All web traffic should use strong encryption.", "remediation": "Force HTTPS redirect.", "confidence": "high"}
+  ],
+  "server_info_disclosure": [
+    {"framework": "NIST", "control": "SP 800-53 SI-11", "explanation": "Server version disclosure aids attackers in targeting known vulnerabilities.", "remediation": "Remove or generalize Server header.", "confidence": "low"}
+  ],
+  "technology_disclosure": [
+    {"framework": "NIST", "control": "SP 800-53 SI-11", "explanation": "Technology stack disclosure aids targeted attacks.", "remediation": "Remove X-Powered-By and similar headers.", "confidence": "low"}
+  ],
+  "trace_method_enabled": [
+    {"framework": "NIST", "control": "SP 800-53 CM-7", "explanation": "TRACE method can enable cross-site tracing attacks.", "remediation": "Disable TRACE method.", "confidence": "medium"},
+    {"framework": "PCI-DSS", "control": "Requirement 6.4", "explanation": "Unnecessary HTTP methods should be disabled.", "remediation": "Disable TRACE.", "confidence": "medium"}
+  ],
+  "dangerous_methods_enabled": [
+    {"framework": "NIST", "control": "SP 800-53 CM-7", "explanation": "PUT/DELETE methods can allow unauthorized file manipulation.", "remediation": "Restrict HTTP methods to GET/POST/HEAD.", "confidence": "medium"}
+  ],
+  "missing_spf": [
+    {"framework": "NIST", "control": "SP 800-177", "explanation": "SPF records help prevent email spoofing.", "remediation": "Publish SPF TXT records.", "confidence": "medium"}
+  ],
+  "permissive_spf": [
+    {"framework": "NIST", "control": "SP 800-177", "explanation": "Overly permissive SPF negates email authentication.", "remediation": "Restrict SPF to authorized senders.", "confidence": "high"}
+  ],
+  "weak_spf": [
+    {"framework": "NIST", "control": "SP 800-177", "explanation": "SPF soft-fail allows spoofed emails to be delivered.", "remediation": "Use -all (hard fail) instead of ~all.", "confidence": "medium"}
+  ],
+  "missing_dmarc": [
+    {"framework": "NIST", "control": "SP 800-177", "explanation": "DMARC provides email authentication and reporting.", "remediation": "Publish DMARC records with enforcement policy.", "confidence": "medium"}
+  ],
+  "dmarc_policy_none": [
+    {"framework": "NIST", "control": "SP 800-177", "explanation": "DMARC p=none provides monitoring only, not enforcement.", "remediation": "Upgrade to p=quarantine or p=reject.", "confidence": "medium"}
+  ],
+  "missing_caa": [
+    {"framework": "NIST", "control": "SP 800-57", "explanation": "CAA records restrict which CAs can issue certificates.", "remediation": "Publish CAA DNS records.", "confidence": "low"}
+  ],
+  "critical_port_exposed": [
+    {"framework": "NIST", "control": "SP 800-53 SC-7", "explanation": "Exposed critical services increase attack surface significantly.", "remediation": "Restrict access with firewall rules.", "confidence": "high"},
+    {"framework": "PCI-DSS", "control": "Requirement 1.3", "explanation": "Network segmentation should limit service exposure.", "remediation": "Implement network access controls.", "confidence": "high"}
+  ],
+  "database_port_exposed": [
+    {"framework": "GDPR", "control": "Article 32", "explanation": "Exposed database ports risk direct unauthorized data access.", "remediation": "Block database ports from public access.", "confidence": "high"},
+    {"framework": "NIST", "control": "SP 800-53 SC-7", "explanation": "Database services should not be directly accessible from the internet.", "remediation": "Use firewall rules to restrict access.", "confidence": "high"},
+    {"framework": "PCI-DSS", "control": "Requirement 1.3", "explanation": "Database systems must not be directly accessible from untrusted networks.", "remediation": "Segment database networks.", "confidence": "high"}
+  ],
+  "dangerous_service_exposed": [
+    {"framework": "NIST", "control": "SP 800-53 SC-7", "explanation": "Services like FTP, SMB, and RDP expand the attack surface.", "remediation": "Disable or restrict access to these services.", "confidence": "high"},
+    {"framework": "PCI-DSS", "control": "Requirement 1.3", "explanation": "Only necessary services should be accessible.", "remediation": "Remove unnecessary services.", "confidence": "high"}
+  ],
+  "mail_service_exposed": [
+    {"framework": "NIST", "control": "SP 800-53 SC-7", "explanation": "Open mail ports may allow spam relay or credential harvesting.", "remediation": "Restrict mail services and require authentication.", "confidence": "medium"}
   ]
 }
-

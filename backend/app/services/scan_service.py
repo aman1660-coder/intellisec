@@ -13,6 +13,8 @@ from app.pqc.engine import assess_pqc
 from app.reports.generator import generate_reports
 from app.scanners.http_scanner import inspect_http
 from app.scanners.tls_scanner import inspect_tls
+from app.scanners.dns_scanner import inspect_dns
+from app.scanners.port_scanner import inspect_ports
 from app.scoring.risk import score_contextual_risk
 from app.utils.target_validator import TargetValidationError, validate_target
 
@@ -28,10 +30,23 @@ async def run_scan(user_id: str, target_url: str, context: dict[str, Any] | None
         raise TargetValidationError("Authorization confirmation is required before scanning.")
     started = time.perf_counter()
     target = validate_target(target_url)
+
+    # Run all 4 scanners in parallel
     tls_task = asyncio.to_thread(inspect_tls, target)
     http_task = inspect_http(target)
-    tls, http = await asyncio.gather(tls_task, http_task)
-    findings = list(tls.get("findings", [])) + list(http.get("findings", []))
+    dns_task = inspect_dns(target)
+    port_task = inspect_ports(target)
+
+    tls, http, dns, ports = await asyncio.gather(tls_task, http_task, dns_task, port_task)
+
+    # Combine findings from all scanners
+    findings = (
+        list(tls.get("findings", []))
+        + list(http.get("findings", []))
+        + list(dns.get("findings", []))
+        + list(ports.get("findings", []))
+    )
+
     correlation = discover_attack_paths(findings)
     compliance = map_findings(findings)
     risk = score_contextual_risk(findings, correlation["attack_paths"], context or {})
@@ -61,6 +76,8 @@ async def run_scan(user_id: str, target_url: str, context: dict[str, Any] | None
         "pqc_readiness": pqc,
         "tls": tls,
         "http": http,
+        "dns": dns,
+        "ports": ports,
         "ai_interpretation": ai,
         "data_mode_notice": "LIVE SCAN. Results are derived from deterministic observations collected from the authorized target.",
         "execution_time_ms": round((time.perf_counter() - started) * 1000),
@@ -68,4 +85,3 @@ async def run_scan(user_id: str, target_url: str, context: dict[str, Any] | None
     scan["intellisec_score"] = _score_posture(risk["final_score"], findings, correlation["attack_paths"], pqc["score"])
     scan["reports"] = generate_reports(scan)
     return storage.add_scan(scan)
-
